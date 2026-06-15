@@ -24,7 +24,8 @@ until a job arrives, then one gets the call.
   run-job:  resolve project → clean checkout → load repo CLAUDE.md + project memory
             → claude -p (headless) → branch + PR (never merge)
         │
-        ├── output → logs/<runid>.{txt,json,meta,stderr}
+        ├── output → logs/<runid>.{txt,json,meta,stderr,transcript.jsonl}
+        │            (transcript.jsonl = the full reasoning: thinking + tool calls)
         ├── prompt → done/<runid>  (or failed/<runid>)
         └── event  → Loki → Grafana ("Claude Runner Fleet" dashboard)
 ```

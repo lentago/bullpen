@@ -152,11 +152,21 @@ else
   cp "$outjson" "$outtxt" 2>/dev/null || true
 fi
 
+# session id links this runid to Claude Code's local session transcript
+sid="$(jq -r '.session_id // empty' "$outjson" 2>/dev/null)"
+# Capture the full reasoning transcript (assistant messages, thinking blocks, tool
+# calls/results) that Claude Code wrote locally -> durable NAS log, keyed by runid.
+# Best-effort; toggle off with CLAUDE_RUNNER_CAPTURE_TRANSCRIPT=0.
+if [ "${CLAUDE_RUNNER_CAPTURE_TRANSCRIPT:-1}" != 0 ] && [ -n "$sid" ]; then
+  tpath="$(find "$HOME/.claude/projects" -name "${sid}.jsonl" -print -quit 2>/dev/null)"
+  [ -n "$tpath" ] && cp -f "$tpath" "$JOBS_ROOT/logs/${runid}.transcript.jsonl" 2>/dev/null || true
+fi
+
 {
   echo "runid=$runid"; echo "exit=$rc"; echo "duration_sec=$dur"
   echo "project=${project:-}"; echo "repo=${repo:-}"
   echo "model=${model:-default}"; echo "cwd=$cwd"
-  echo "cost_usd=${cost}"; echo "num_turns=${turns}"
+  echo "cost_usd=${cost}"; echo "num_turns=${turns}"; echo "session_id=${sid:-}"
   echo "finished=$(date -u +%FT%TZ)"
 } > "$meta"
 
