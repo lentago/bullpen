@@ -58,7 +58,7 @@ minutes (claim → work → PR), a few-second Grafana auto-refresh is adequate.
   2. **Loki derived field** when the PR url only lives in the JSON log line: a
      `matcherRegex` captures it and templates `${__value.raw}` into a full external
      URL (docs example: `http://localhost:16686/trace/${__value.raw}` → swap in
-     `https://github.com/PitziLabs/<repo>/pull/${__value.raw}`). In provisioning YAML
+     `https://github.com/lentago/<repo>/pull/${__value.raw}`). In provisioning YAML
      escape it as `$${__value.raw}`. [P8]
 - **Cardinality guardrail (matches existing discipline).** Keep `runid` and `pr_url`
   **in the JSON log body, never as Loki stream labels** — exactly what `cr-emit` does

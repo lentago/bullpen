@@ -236,6 +236,6 @@ chown -R root:root /opt/claude-runner
 su - claude -c '
   set -e
   mkdir -p /srv/jobs/projects
-  cr-newproject ice-cream-book PitziLabs/ice-cream-book sonnet main
+  cr-newproject ice-cream-book lentago/ice-cream-book sonnet main
 '
 echo PROJECTS_SETUP_DONE
