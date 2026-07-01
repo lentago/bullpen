@@ -1,5 +1,11 @@
 # n8n submit form — a web front-end for the bullpen
 
+> **Retired 2026-07-01.** The reference deployment (LXC 113, `/form/bullpen`) was torn
+> down — the form was a demonstration, and the standing dispatch paths are `cr-submit`
+> and direct NAS-inbox writes. Everything below is kept as a working recipe: the
+> workflow JSON and compose file still deploy as described if a form front-end is
+> ever wanted again.
+
 A point-and-click way to drop a job onto the fleet. It's just another **producer**:
 the form writes a job file into the NAS `inbox/` exactly like `cr-submit` does — same
 spec format, same write-then-rename — so any idle worker picks it up and opens a PR. No
