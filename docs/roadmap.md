@@ -14,7 +14,7 @@ Status legend: `proposed` → `researched` → `in-progress` → `shipped`.
 
 ### Goal
 
-A live board — on the office wall display and/or the *Claude Runner Fleet* Grafana
+A live board — on the *Claude Runner Fleet* Grafana
 dashboard — where each job **glows amber the instant a worker claims it** and **flips
 green (and becomes a clickable link to its PR) when the PR opens**. The classic CI
 *build radiator / extreme-feedback-device / information radiator* pattern, applied to
@@ -113,7 +113,7 @@ shape `cr-emit` already builds.
 |---|---|---|
 | **Low ✅** | Log-native + Canvas/Status-history + derived-field PR links | **Recommended** — delivers amber→green-links-to-PR, zero new deps |
 | Medium | `statsd_exporter` (TTL) → Prometheus | Only if Prom metrics are independently wanted; no UX gain here |
-| High | Bespoke SSE/WebSocket page on the pve2 kiosk | Only for sub-second glow or a custom aesthetic Grafana can't do |
+| High | Bespoke SSE/WebSocket page (self-hosted) | Only for sub-second glow or a custom aesthetic Grafana can't do |
 
 ### Sources
 
