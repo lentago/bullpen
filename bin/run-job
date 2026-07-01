@@ -172,6 +172,33 @@ else
   cp "$outjson" "$outtxt" 2>/dev/null || true
 fi
 
+# Extract PR URL from output now — used for both the no-PR check and the
+# auto-merge disarm below, so it must be set before the done/failed routing.
+prurl=""
+if [ -n "${project:-}" ] && [ -n "${repo:-}" ] && [ -f "$outtxt" ]; then
+  prurl="$(grep -oE 'https://github.com/[^ )]+/pull/[0-9]+' "$outtxt" 2>/dev/null | head -1)"
+fi
+
+# For project jobs that exit cleanly: verify a PR was actually opened.
+# Agents that make no changes (analysis/read-only) stay on the base branch; those
+# legitimately open no PR and are NOT failed here.  If the agent switched to a
+# non-base branch but no PR URL appears in the output, fall back to a live gh
+# query.  If that also finds nothing, the job is a failure — routes to failed/
+# and is logged to errlog with the reason (rc=6).
+if [ "$rc" -eq 0 ] && [ -n "${project:-}" ] && [ -n "${repo:-}" ] && [ -z "$prurl" ]; then
+  _ab="$(git -C "$ckout" rev-parse --abbrev-ref HEAD 2>/dev/null)"
+  if [ -n "$_ab" ] && [ "$_ab" != "HEAD" ] && [ "$_ab" != "$branch" ]; then
+    prurl="$(GH_TOKEN="$(gh-token 2>/dev/null)" gh pr list \
+      --repo "$repo" --head "$_ab" --state open \
+      --json url --jq '.[0].url' 2>/dev/null || true)"
+    if [ -z "$prurl" ]; then
+      rc=6
+      echo "run-job: project job completed on branch '$_ab' but no open PR found (possible push/permission failure)" >>"$errlog"
+    fi
+  fi
+  unset _ab
+fi
+
 # Capture the full reasoning transcript (assistant messages, thinking blocks, tool
 # calls/results) that Claude Code wrote locally -> durable NAS log, keyed by runid.
 # Best-effort; toggle off with CLAUDE_RUNNER_CAPTURE_TRANSCRIPT=0.
@@ -198,12 +225,10 @@ fi
 # Enforce the no-auto-merge rule: a runner-bot PR is ALWAYS left for a human, so if
 # the agent opened one (and possibly armed auto-merge despite the standing rule),
 # disarm it. Overrides any repo convention; runs win-or-lose. Best-effort.
-if [ -n "${repo:-}" ] && [ -f "$outtxt" ]; then
-  prurl="$(grep -oE 'https://github.com/[^ )]+/pull/[0-9]+' "$outtxt" 2>/dev/null | head -1)"
-  if [ -n "$prurl" ]; then
-    GH_TOKEN="$(gh-token 2>/dev/null)" gh pr merge "$prurl" --disable-auto >/dev/null 2>&1 \
-      && echo "run-job: disarmed auto-merge on $prurl (bot PRs are human-reviewed)" | systemd-cat -t claude-runner -p info || true
-  fi
+# prurl was extracted above before the done/failed routing.
+if [ -n "${prurl:-}" ]; then
+  GH_TOKEN="$(gh-token 2>/dev/null)" gh pr merge "$prurl" --disable-auto >/dev/null 2>&1 \
+    && echo "run-job: disarmed auto-merge on $prurl (bot PRs are human-reviewed)" | systemd-cat -t claude-runner -p info || true
 fi
 
 rm -f "$proc.owner" 2>/dev/null || true
