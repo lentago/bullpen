@@ -11,7 +11,15 @@ ts="$(date -u +%Y%m%dT%H%M%SZ)"
 mkdir -p "$JOBS_ROOT/inbox"
 
 model=""
-if [ "${1:-}" = "-m" ]; then model="${2:?usage: cr-submit -m <model> ...}"; shift 2; fi
+project=""
+
+while true; do
+  case "${1:-}" in
+    -m) model="${2:?usage: cr-submit -m <model> ...}"; shift 2 ;;
+    -p) project="${2:?usage: cr-submit [-m model] -p <project> \"task\"}"; shift 2 ;;
+    *)  break ;;
+  esac
+done
 
 # -f: queue a verbatim copy of an existing spec (it carries its own model).
 if [ "${1:-}" = "-f" ]; then
@@ -25,9 +33,6 @@ if [ "${1:-}" = "-f" ]; then
   cp "$2" "$dest.partial" && mv "$dest.partial" "$dest"
   echo "queued: $dest"; exit 0
 fi
-
-project=""
-if [ "${1:-}" = "-p" ]; then project="${2:?usage: cr-submit [-m model] -p <project> \"task\"}"; shift 2; fi
 
 task="$*"; [ -n "$task" ] || task="$(cat)"
 [ -n "${task// /}" ] || { echo "cr-submit: empty task" >&2; exit 1; }
